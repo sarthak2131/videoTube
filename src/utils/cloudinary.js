@@ -1,33 +1,33 @@
 import { v2 as cloudinary } from 'cloudinary';
-import fs from 'fs'
+import fs from 'fs';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 cloudinary.config({
-    cloud_name : process.env.CLOUDINARY_CLOUD_NAME,
-    api_key:process.env.CLOUDINARY_API_KEY,
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-
-const uploadOnCloudinary  = async(localFilePath) =>{
+const uploadOnCloudinary = async (localFilePath) => {
     try {
-        if(!localFilePath) return null
-       const response = await cloudinary.uploader.upload(
-            localFilePath , {
-                resource_type:'auto'
+        if (!localFilePath) return null;
+        const response = await cloudinary.uploader.upload(
+            localFilePath, {
+                resource_type: 'auto'
             }
-        )
-        console.log("File uploaded on cloudinary. File Path : "+ response.url)
+        );
+        console.log("File uploaded on cloudinary. File Path: " + response.url);
 
-
-        // once the file uploaded we would like to delete it form our server 
-        fs.unlinkSync(localFilePath)
+        // once the file uploaded we would like to delete it from our server 
+        fs.unlinkSync(localFilePath);
         return response;
     } catch (error) {
-       fs.unlinkSync(localFilePath)
-       return nulll;
+        console.error("Error uploading to Cloudinary: ", error);
+        fs.unlinkSync(localFilePath);
+        return null;
     }
-}
+};
 
-
-export {uploadOnCloudinary};
+export { uploadOnCloudinary };
