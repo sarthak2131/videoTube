@@ -338,13 +338,52 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $lookup:{
-        from:"Subscription",
+        from:"subscriptions",
         localField:"_id",
         foreignField:"subscriber",
         as:"subscribedTo"
       }
+    },
+    {
+      $addFields:{
+           subscriberCount:{
+            $size:"$subscribers"
+           },
+           channelsSubcribedToCount:{
+            $size:"$subscribedTo"
+           },
+          isSubcribed:{
+             $cond:{
+              $if:{$in:[req.user?._id,"$subscribers.subcriber"]},
+              then:true,
+              else:false
+             }
+          }
+      }
+    },
+    {
+      // Project only the necessary data
+      $project:{
+        fullname:1,
+        username:1,
+        avatar:1,
+        subscriberCount:1,
+        channelsSubcribedToCount:1,
+        isSubcribed:1,
+        coverImage:1,
+        email:1
+      }
+    
     }
   ]);
+
+  if(!channel?.length){
+    throw new ApiError(404,"Channel not found")
+  }
+  return res
+  .status(200)
+  .json(new ApiResponse(200,Channel[0],"Channel profile fetched Successfully"))
+
 });
 const getWatchHistory = asyncHandler(async (req, res) => {});
 
