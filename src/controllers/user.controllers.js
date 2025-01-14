@@ -8,6 +8,7 @@ import {
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import { Subscription } from "../models/subscription.models.js";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshToken = async (user_id) => {
   try {
@@ -385,7 +386,52 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   .json(new ApiResponse(200,Channel[0],"Channel profile fetched Successfully"))
 
 });
-const getWatchHistory = asyncHandler(async (req, res) => {});
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = await User.aggregate([
+    {
+      $match:{
+        _id:new mongoose.Types.ObjectId(req.user?._id)
+      }
+    },
+    {
+       $lookup:{
+        from:"videos",
+        localField:"watchHistory",
+        foreignField:"_id",
+        as:"watch_History",
+        pipeline:[
+          {
+            $lookup:{
+              from: "users",
+              localField:"owner",
+              foreignField:"_id",
+              as:"owner",
+              pipeline:[
+                {
+                  $project:{
+                    fullname:1,
+                    username:1,
+                    avatar:1,
+                  }
+                }
+              ]
+            }
+          },
+          {
+            $addFields:{
+              owner:{
+                $first:"$owner"
+              }
+            }
+          }
+        ]
+       }
+    }
+  ])
+  return  res
+  .status(200)
+  .json(new ApiResponse(200,user[0]?.watch_History,"Watch History fetched Successfully"))
+});
 
 export {
   registerUser,
